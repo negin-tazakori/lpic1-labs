@@ -1,7 +1,7 @@
-# Postgresql Storage with LVM
+# PostgreSQL Storage with LVM
 
 ## Objective 
-Configure a dedicated storage for Postgresql using LVM.
+Configure a dedicated storage for PostgreSQL using LVM.
 
 ## Storage architecture
 ``` test
@@ -67,7 +67,10 @@ Verify physical volume:
 sudo pvs
 ```
 Output:
-
+```bash
+  PV         VG Fmt  Attr PSize    PFree
+  /dev/sdb1     lvm2 ---  1020.00m 1020.00m 
+```
 
 ### Create the volume group:
 ```bash
@@ -82,7 +85,10 @@ Verify volume group:
 sudo vgs
 ```
 Output:
-
+```bash
+  VG            #PV #LV #SN Attr   VSize    VFree
+  vg-postgresql   1   0   0 wz--n- 1020.00m 1020.00m 
+```
 
 ### Create the logical volume:
 ```bash
@@ -97,12 +103,51 @@ Verify logical volume:
 sudo lvs
 ```
 Output:
-
-## 2. Create Filesystem:
+```bash
+  LV            VG            Attr       LSize    Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  lv-postgresql vg-postgresql -wi-ao---- 1020.00m
+```
+## 3. Create Filesystem:
 Create an ext4 filesystem on the logical volume:
 ```bash
 sudo mkfs.ext4 /dev/vg-postgresql/lv-postgresql
 ```
+## 4. Mount the Filesystem
+Create the directory that will be used as the PostgreSQL data storage location:
+```bash
+sudo mkdir -p /var/lib/postgresql
+```
+### Mount the logical volume to the PostgreSQL data directory:
+```bash
+sudo mount /dev/vg-postgresql/lv-postgresql /var/lib/postgresql
+```
+Use `df` to verify that the filesystem is mounted correctly:
+```bash
+df -h
+```
+Output:
+```text
+Filesystem                                 Size  Used Avail Use% Mounted on
+/dev/mapper/vg--postgresql-lv--postgresql  986M   63M  856M   7% /var/lib/postgresql
+```
+## 5. Configure /etc/fstab:
+Get the UUID of filesystem:
+```bash
+sudo blkid /dev/vg-postgresql/lv-postgresql
+```
+### Add the UUID of filesystem to /etc/fstab for automatic mounting after reboot:
+```bash
+UUID=<filesystem-UUID>  /var/lib/postgresql  ext4  defaults  0  2
+```
+## 6. Install PostgreSQL
+After preparing the storage, install PostgreSQL:
+```bash
+sudo apt install postgresql
+```
+It will use /var/lib/postgresql as it's data storage location.
+## NOTE: Existing PostgreSQL installation: 
+If PostgreSQL is already installed and contains data, stop it and create a backup of /var/lib/postgresql before mounting the new filesystem.
+After mounting, restore the backup to /var/lib/postgresql.
 
 
 
