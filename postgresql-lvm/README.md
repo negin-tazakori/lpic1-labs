@@ -21,7 +21,7 @@ ext4
 ```
 
 ## 1. Create Partition
-A separate disk was added to the virtual machine.
+1 GB additional disk was added to the virtual machine for this task.
 
 The disk was partitioned using fdisk:
 ```bash
@@ -54,7 +54,7 @@ lsblk
 ```
 
 ## 2. Create LVM
-Create the physical volume:
+### Create the physical volume:
 ```bash
 sudo pvcreate /dev/sdb1
 ```
@@ -69,7 +69,7 @@ sudo pvs
 Output:
 
 
-Create the volume group:
+### Create the volume group:
 ```bash
 sudo vgcreate vg-postgresql /dev/sdb1
 ```
@@ -77,12 +77,34 @@ Output:
 ```text
 Volume group "vg-postgresql" successfully created.
 ```
-
 Verify volume group:
 ```bash
 sudo vgs
 ```
 Output:
+
+
+### Create the logical volume:
+```bash
+sudo lvcreate -l 100%FREE -n lv-postgresql vg-postgresql
+```
+Output:
+```text
+Logical volume "lv-postgresql" created.
+```
+Verify logical volume:
+```bash
+sudo lvs
+```
+Output:
+
+## 2. Create Filesystem:
+Create an ext4 filesystem on the logical volume:
+```bash
+sudo mkfs.ext4 /dev/vg-postgresql/lv-postgresql
+```
+
+
 
 
 
